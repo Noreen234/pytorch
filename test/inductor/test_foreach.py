@@ -1087,6 +1087,24 @@ class ForeachTests(TestCase):
             ):
                 _ = run_fw_bw_and_get_code(lambda: torch.compile(fn)(*inps))
 
+    def test_foreach_map_assert_fused(self):
+        from torch._higher_order_ops.foreach_map import foreach_map
+
+        def add_fn(x, y):
+            return x + y
+
+        x = [torch.randn(10, device = "cpu") for _ in range(3)]
+        y = [torch.randn(10, device = "cpu") for _ in range(3)]
+
+        # 1. Success case: standard fusible operations pass when assert_fused=True
+        compiled_fn = torch.compile(
+            lambda a, b: foreach_map(add_fn, a, b, assert_fused = True)
+        )
+        
+        res = compiled_fn(x, y)
+        expected = [a + b for a, b in zip(x, y)]
+        self.assertEqual(res, expected)
+
     @requires_gpu
     @torch._dynamo.config.patch("capture_scalar_outputs", True)
     @torch._inductor.config.patch("_use_fp64_for_unbacked_floats", True)

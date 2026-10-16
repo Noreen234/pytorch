@@ -475,7 +475,8 @@ def construct_dict(
     return self
 
 
-def foreach_map_fn(*args: Any) -> Any:
+def foreach_map_fn(*args: Any, **kwargs: Any) -> Any:
+    kwargs.pop("assert_fused", False)
     op = args[0]
     new_args: list[Any] = []
     at_least_one_list = False

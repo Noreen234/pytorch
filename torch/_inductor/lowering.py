@@ -1049,6 +1049,7 @@ def _foreach_map(subgraph, *args, **kwargs):
     """
     from .subgraph_lowering import PointwiseSubgraphLowering
 
+    assert_fused = kwargs.pop("assert_fused", False)
     inputs = args
 
     gm = subgraph.graph_module
@@ -1080,6 +1081,11 @@ def _foreach_map(subgraph, *args, **kwargs):
 
     if not (all(x is not None for x in outputs)):
         raise AssertionError("expected: all(x is not None for x in outputs)")
+
+    if assert_fused:
+        failed_fusion = any(not use_foreach for (device, use_foreach) in groups.keys()) or len(groups) > 1
+        raise RuntimeError("foreach_map was called with assert_fused=True, but the operations were not fully fused.")
+    
     return outputs
 
 
